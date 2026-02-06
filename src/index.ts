@@ -192,9 +192,22 @@ app.get('/health', (req, res) => {
 
 // MCP endpoint - supports both GET and POST for Streamable HTTP
 const handleMcp = async (req: any, res: any) => {
-  const transport = new StreamableHTTPServerTransport();
-  await server.connect(transport);
-  await transport.handleRequest(req, res, req.body);
+  console.log(`[MCP] ${req.method} ${req.path}`);
+  console.log('[MCP] Headers:', JSON.stringify(req.headers, null, 2));
+  console.log('[MCP] Body:', JSON.stringify(req.body, null, 2));
+
+  try {
+    const transport = new StreamableHTTPServerTransport();
+    await server.connect(transport);
+    await transport.handleRequest(req, res, req.body);
+    console.log('[MCP] Request handled successfully');
+  } catch (error: any) {
+    console.error('[MCP] Error handling request:', error.message);
+    console.error('[MCP] Error stack:', error.stack);
+    if (!res.headersSent) {
+      res.status(500).json({ error: error.message });
+    }
+  }
 };
 
 app.get('/mcp', handleMcp);
