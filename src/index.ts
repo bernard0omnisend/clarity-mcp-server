@@ -35,14 +35,15 @@ async function callClarityAPI(endpoint: string, body: any) {
   return await response.json();
 }
 
-// Initialize MCP server
-const server = new McpServer(
-  { name: 'clarity-mcp-server', version: '1.0.0' },
-  { capabilities: { tools: {} } }
-);
+// Function to create a new MCP server instance for each request
+function createServer() {
+  const server = new McpServer(
+    { name: 'clarity-mcp-server', version: '1.0.0' },
+    { capabilities: { tools: {} } }
+  );
 
-// Tool 1: Query Analytics Dashboard
-server.registerTool(
+  // Tool 1: Query Analytics Dashboard
+  server.registerTool(
   'query-analytics-dashboard',
   {
     description: 'Retrieves analytics data and metrics from your Clarity project dashboard using a simplified natural language search query. Use this to get traffic stats, user behavior metrics, and performance data.',
@@ -169,6 +170,9 @@ server.registerTool(
   }
 );
 
+  return server;
+}
+
 // Express app setup
 const app = express();
 const port = process.env.PORT || 3000;
@@ -197,6 +201,8 @@ const handleMcp = async (req: any, res: any) => {
   console.log('[MCP] Body:', JSON.stringify(req.body, null, 2));
 
   try {
+    // Create a new server instance for each request
+    const server = createServer();
     const transport = new StreamableHTTPServerTransport();
     await server.connect(transport);
     await transport.handleRequest(req, res, req.body);
