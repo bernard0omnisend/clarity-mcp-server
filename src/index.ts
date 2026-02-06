@@ -190,6 +190,23 @@ app.get('/health', (req, res) => {
   });
 });
 
+// OAuth discovery endpoints - return "not supported"
+app.all('/.well-known/oauth-authorization-server', (req, res) => {
+  console.log('[OAuth] Discovery request - OAuth not supported');
+  res.status(404).json({
+    error: 'oauth_not_supported',
+    message: 'This MCP server does not require OAuth authentication'
+  });
+});
+
+app.all('/.well-known/openid-configuration', (req, res) => {
+  console.log('[OAuth] OpenID discovery request - OAuth not supported');
+  res.status(404).json({
+    error: 'oauth_not_supported',
+    message: 'This MCP server does not require OAuth authentication'
+  });
+});
+
 // GET request - return endpoint info
 app.get('/mcp', (req, res) => {
   res.json({
@@ -206,7 +223,8 @@ app.get('/mcp', (req, res) => {
       'list-session-recordings',
       'query-documentation-resources'
     ],
-    usage: 'Send POST requests with MCP protocol JSON-RPC 2.0 format'
+    usage: 'Send POST requests with MCP protocol JSON-RPC 2.0 format',
+    authentication: 'none'
   });
 });
 
@@ -215,6 +233,16 @@ app.post('/mcp', async (req, res) => {
   const transport = new StreamableHTTPServerTransport();
   await server.connect(transport);
   await transport.handleRequest(req, res, req.body);
+});
+
+// Catch-all for debugging - log any other requests
+app.use((req, res, next) => {
+  console.log(`[Unknown] ${req.method} ${req.path} - Headers:`, JSON.stringify(req.headers, null, 2));
+  res.status(404).json({
+    error: 'not_found',
+    message: `Endpoint ${req.path} not found`,
+    availableEndpoints: ['/health', '/mcp']
+  });
 });
 
 app.listen(port, () => {
