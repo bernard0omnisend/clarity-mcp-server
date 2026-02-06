@@ -190,14 +190,32 @@ app.get('/health', (req, res) => {
   });
 });
 
-const handleMcp = async (req: any, res: any) => {
+// GET request - return endpoint info
+app.get('/mcp', (req, res) => {
+  res.json({
+    service: 'clarity-mcp-server',
+    version: '1.0.0',
+    protocol: 'MCP',
+    description: 'Microsoft Clarity MCP Server - Analytics, Session Recordings, and Documentation',
+    endpoints: {
+      health: '/health',
+      mcp: '/mcp (POST only)'
+    },
+    tools: [
+      'query-analytics-dashboard',
+      'list-session-recordings',
+      'query-documentation-resources'
+    ],
+    usage: 'Send POST requests with MCP protocol JSON-RPC 2.0 format'
+  });
+});
+
+// POST request - handle MCP protocol
+app.post('/mcp', async (req, res) => {
   const transport = new StreamableHTTPServerTransport();
   await server.connect(transport);
   await transport.handleRequest(req, res, req.body);
-};
-
-app.get('/mcp', handleMcp);
-app.post('/mcp', handleMcp);
+});
 
 app.listen(port, () => {
   console.log(`🚀 Microsoft Clarity MCP Server running on port ${port}`);
